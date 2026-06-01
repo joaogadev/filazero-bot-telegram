@@ -178,6 +178,79 @@ bot.on(
         );
       }
 
+      if (data.startsWith("date:")) {
+
+        const selectedDate =
+          data.split(":")[1];
+
+        const state =
+          getConversationState(chatId);
+
+        const hours =
+          state.availableHours[selectedDate];
+
+        const buttons = hours.map((hour: string) => [
+          {
+            text: hour,
+            callback_data: `hour:${hour}`
+          }
+        ]);
+
+        await bot.sendMessage(
+          chatId,
+          `🕒 Horários disponíveis para ${selectedDate}:`,
+          {
+            reply_markup: {
+              inline_keyboard: buttons
+            }
+          }
+        );
+
+        updateConversationState(chatId, {
+          selectedDate,
+          currentStep: "CHOOSING_HOUR"
+        });
+      }
+
+      if (data.startsWith("hour:")) {
+
+        const selectedHour = data.split(":").slice(1).join(":");
+
+        const state = getConversationState(chatId);
+
+        const selectedDate = state.selectedDate;
+        const serviceId = state.lastArguments?.serviceId || null;
+
+        // validação de consistência (evita state quebrado)
+        if (!selectedDate || !state.availableHours?.[selectedDate]) {
+          await bot.sendMessage(chatId, "⚠️ Sessão expirada ou dados inválidos. Reinicie o agendamento.");
+          return;
+        }
+
+        updateConversationState(chatId, {
+          selectedHour,
+          currentStep: "CONFIRMING_APPOINTMENT"
+        });
+
+        // aqui você já entra na camada de "checkout do agendamento"
+        const confirmationText =
+          `📌 Confirmação do agendamento:\n\n` +
+          `📅 Data: ${selectedDate}\n` +
+          `🕒 Hora: ${selectedHour}\n\n` +
+          `Deseja confirmar?`;
+
+        await bot.sendMessage(chatId, confirmationText, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: "✅ Confirmar", callback_data: "confirm:appointment" },
+                { text: "❌ Cancelar", callback_data: "cancel:appointment" }
+              ]
+            ]
+          }
+        });
+      }
+
       await bot.answerCallbackQuery(query.id);
 
     } catch (error) {

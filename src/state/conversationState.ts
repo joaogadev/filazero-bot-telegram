@@ -51,9 +51,10 @@ type ConversationState = {
 
   // tickets usuário
   myTickets?: any[];
-  
+
   // horários disponíveis para a data escolhida
   availableHours?: any;
+  selectedHour?: string;
 };
 
 const conversations = new Map<number, ConversationState>();
