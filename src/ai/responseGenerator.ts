@@ -1,49 +1,40 @@
-import Groq from "groq-sdk";
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+import { formatCompanies } from "../formatters/companiesFormatter.js";
+import { formatServices } from "../formatters/servicesFormatter.js";
+import { formatAvailableDates } from "../formatters/datesFormatter.js";
+import { formatSessions } from "../formatters/sessionsFormatter.js";
+import { formatBooking } from "../formatters/bookingFormatter.js";
+import { formatMyTickets } from "../formatters/myTicketFormatter.js";
+import { formatTicketStatus } from "../formatters/ticketStatusFormatter.js";
 
 export async function generateResponse(
-  userMessage: string,
-  toolResult: any
-): Promise<string> {
+  tool: string,
+  result: any
+) {
 
-  const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+  switch (tool) {
 
-    messages: [
-      {
-        role: "system",
-        content: `
-Você é um assistente da Filazero.
+    case "list_companies":
+      return formatCompanies(result);
 
-Responda de forma:
-- natural
-- amigável
-- objetiva
+    case "get_company_services":
+      return formatServices(result);
 
-NÃO responda em JSON.
-`
-      },
+    case "get_available_dates":
+      return formatAvailableDates(result);
 
-      {
-        role: "user",
-        content: `
-Usuário:
-${userMessage}
+    case "get_available_sessions":
+      return formatSessions(result);
 
-Resultado da tool:
-${JSON.stringify(toolResult)}
-`
-      }
-    ]
-  });
+    case "schedule_appointment":
+      return formatBooking(result);
 
-  const content = completion.choices[0].message.content;
+    case "check_ticket_status":
+      return formatMyTickets(result);
 
-  console.log("RESPOSTA FINAL IA:");
-  console.log(content);
+    case "list_my_tickets":
+      return formatTicketStatus(result);
 
-  return content || "Sem resposta";
+    default:
+      return "Não consegui processar a resposta.";
+  }
 }

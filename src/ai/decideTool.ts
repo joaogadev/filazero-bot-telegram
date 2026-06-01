@@ -1,21 +1,27 @@
-import Groq from "groq-sdk";
+import OpenAI from "openai";
 
-const groq = new Groq({
+const client = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1"
 });
 
-export async function decideTool(message: string) {
+export async function decideTool(
+  message: string,
+  state: any
+) {
 
-  const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+  const completion = await client.chat.completions.create({
+    model: "llama3-70b-8192",
 
     messages: [
       {
         role: "system",
         content: `
-Você é um roteador MCP.
+Você é um assistente da Filazero.
 
-Você só pode utilizar UMA dessas tools:
+Sua função é escolher a tool MCP correta.
+
+TOOLS DISPONÍVEIS:
 
 - list_companies
 - get_company_services
@@ -26,7 +32,7 @@ Você só pode utilizar UMA dessas tools:
 - check_ticket_status
 - list_my_tickets
 
-Retorne SOMENTE JSON.
+Você deve responder APENAS JSON.
 
 Exemplo:
 {
@@ -38,17 +44,22 @@ Exemplo:
 
       {
         role: "user",
-        content: message,
-      },
+        content: `
+Mensagem do usuário:
+${message}
+
+Estado atual:
+${JSON.stringify(state)}
+`
+      }
     ],
+
+    temperature: 0
   });
 
-  const content = completion.choices[0].message.content || "{}";
+  const content =
+    completion.choices[0].message.content || "{}";
 
-  console.log("RESPOSTA BRUTA GROQ:");
-  console.log(content);
-
-  // remove markdown ```json
   const cleanContent = content
     .replace(/```json/g, "")
     .replace(/```/g, "")

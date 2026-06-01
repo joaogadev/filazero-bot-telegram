@@ -1,14 +1,24 @@
-type UserState = {
-  companySlug?: string;
-  serviceId?: number;
+type ConversationState = {
+  lastTool?: string;
+  lastArguments?: any;
+  lastResult?: any;
 };
 
-const userStates = new Map<number, UserState>();
+const conversations = new Map<number, ConversationState>();
 
-export function getUserState(chatId: number) {
-  return userStates.get(chatId);
+export function getConversationState(chatId: number) {
+  return conversations.get(chatId) || {};
 }
 
-export function setUserState(chatId: number, state: UserState) {
-  userStates.set(chatId, state);
+export function updateConversationState(
+  chatId: number,
+  data: Partial<ConversationState>
+) {
+
+  const current = conversations.get(chatId) || {};
+
+  conversations.set(chatId, {
+    ...current,
+    ...data
+  });
 }
