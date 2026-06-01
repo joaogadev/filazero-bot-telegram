@@ -11,7 +11,7 @@ export async function decideTool(
 ) {
 
   const completion = await client.chat.completions.create({
-    model: "llama3-70b-8192",
+    model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
 
     messages: [
       {

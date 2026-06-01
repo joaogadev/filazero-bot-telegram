@@ -16,25 +16,44 @@ type Service = {
 // estado da conversa
 type ConversationState = {
 
-  // controle do fluxo atual
+  // controle da conversa
   currentStep?: string;
 
-  // empresa selecionada
-  selectedCompany?: Company;
-
-  // lista de empresas carregadas
-  companies?: Company[];
-
-  // serviço selecionado
-  selectedService?: Service;
-
-  // lista de serviços carregados
-  services?: Service[];
-
-  // dados técnicos/debug
+  // histórico
   lastTool?: string;
-  lastArguments?: unknown;
-  lastResult?: unknown;
+  lastArguments?: any;
+  lastResult?: any;
+
+  // empresas
+  companies?: any[];
+  selectedCompany?: any;
+
+  // serviços
+  services?: any[];
+  selectedService?: any;
+
+  // datas
+  dates?: any[];
+  selectedDate?: any;
+
+  // sessões
+  sessions?: any[];
+  selectedSession?: any;
+
+  // formulário
+  formFields?: any[];
+
+  // ticket emitido
+  ticket?: any;
+
+  // status ticket
+  ticketStatus?: any;
+
+  // tickets usuário
+  myTickets?: any[];
+  
+  // horários disponíveis para a data escolhida
+  availableHours?: any;
 };
 
 const conversations = new Map<number, ConversationState>();

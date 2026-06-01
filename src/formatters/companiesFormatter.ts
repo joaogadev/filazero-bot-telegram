@@ -1,28 +1,42 @@
-// Formata a listagem de empresas disponíveis
+// Formatter de empresas disponíveis
 
 export function formatCompanies(result: any): string {
-  const companies = result?.companies;
+  try {
 
-  if (!companies || companies.length === 0) {
-    return "Nenhuma empresa disponível no momento.";
-  }
+    // pega texto retornado pelo MCP
+    const rawText =
+      result.result.content[0].text;
 
-  let message = "Empresas disponíveis para agendamento:\n\n";
+    // converte string JSON para objeto
+    const parsed = JSON.parse(rawText);
 
-  companies.forEach((company: any, index: number) => {
+    const companies = parsed.companies;
 
-    // Nome da empresa
-    message += `${index + 1}. ${company.name}\n`;
-
-    // Descrição opcional
-    if (company.description) {
-      message += `${company.description}\n`;
+    if (!companies || companies.length === 0) {
+      return "Nenhuma empresa disponível no momento.";
     }
 
-    message += "\n";
-  });
+    let message =
+`🏢 Empresas disponíveis para agendamento:
 
-  message += "Digite o nome da empresa desejada.";
+`;
 
-  return message;
+    companies.forEach((company: any, index: number) => {
+      message +=
+        `${index + 1}. ${company.name}
+        Categoria: ${company.category}
+        `;
+    });
+
+    message += "Digite o nome da empresa desejada.";
+
+    return message;
+
+  } catch (error) {
+
+    console.error("Erro ao formatar empresas:");
+    console.error(error);
+
+    return "Erro ao processar empresas.";
+  }
 }
