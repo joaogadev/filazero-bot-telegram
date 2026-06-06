@@ -32,6 +32,10 @@ type ConversationState = {
   services?: any[];
   selectedService?: any;
 
+  // unidades
+  businessUnits?: any[];
+  selectedLocation?: any;
+
   // datas
   dates?: any[];
   selectedDate?: any;

@@ -1,79 +1,32 @@
 import "dotenv/config";
 import { bot } from "./bot/telegram.js";
-import { decideTool } from "./ai/decideTool.js";
-import { generateResponse } from "./ai/responseGenerator.js";
 import { MCPClient } from "./mcp/MCPclient.js";
 import { getConversationState, updateConversationState } from "./state/conversationState.js";
+import { executeAIFlow } from "./ai/executeAiFlow.js";
 
 const mcp = new MCPClient();
 console.log("Bot iniciado");
 
 bot.on("message", async (msg) => {
 
-  const chatId = msg.chat.id;
+  const chatId =
+    msg.chat.id;
 
   const userMessage =
     msg.text || "";
 
   try {
 
-    const state = getConversationState(chatId);
+    const state =
+      getConversationState(chatId);
 
-    //IA decide tool
-    const aiResponse = await decideTool(userMessage, state);
-
-    console.log("TOOL ESCOLHIDA:");
-    console.log(aiResponse);
-
-    //executa tool
-    const result = await mcp.callTool(aiResponse.tool,  aiResponse.arguments);
-
-    console.log("RESULTADO TOOL:");
-    console.log(result);
-
-    // salva memória
-    updateConversationState(chatId, {
-      lastTool: aiResponse.tool,
-      lastArguments: aiResponse.arguments,
-      lastResult: result
-    });
-
-    if (aiResponse.tool === "list_companies") {
-
-      const rawText =
-        result.result.content[0].text;
-
-      const parsed =
-        JSON.parse(rawText);
-
-      updateConversationState(chatId, {
-        companies: parsed.companies,
-        currentStep: "CHOOSING_COMPANY"
-      });
-
-      const buttons = parsed.companies.map((company: any) => [
-            {
-              text: company.name,
-              callback_data:
-                `company:${company.slug}`
-            }
-          ]);
-
-      await bot.sendMessage(chatId, "🏢 Escolha uma empresa:",
-        {
-          reply_markup: {
-            inline_keyboard: buttons
-          }
-        }
-      );
-
-      return;
-    }
-
-    // resposta padrão
-    const finalResponse = await generateResponse(aiResponse.tool, result);
-
-    await bot.sendMessage(chatId, finalResponse);
+    await executeAIFlow(
+      userMessage,
+      state,
+      chatId,
+      bot,
+      mcp
+    );
 
   } catch (error) {
 
@@ -138,41 +91,122 @@ bot.on(
       }
 
       if (data.startsWith("service:")) {
-        const serviceId = Number( data.split(":")[1]);
 
-        const state = getConversationState(chatId);
+        const serviceId =
+          Number(data.split(":")[1]);
 
-        const result = await mcp.callTool("get_available_dates",
+        const state =
+          getConversationState(chatId);
+
+        const selectedService =
+          state.services?.find(
+            (s: any) => s.id === serviceId
+          );
+
+        updateConversationState(chatId, {
+          selectedService,
+          currentStep: "CHOOSING_LOCATION"
+        });
+
+        const result =
+          await mcp.callTool(
+            "get_business_units",
             {
-              serviceId,
-              slug:
-                state.selectedCompany
+              slug: state.selectedCompany
             }
           );
 
-        const rawText = result.result.content[0].text;
+        const rawText =
+          result.result.content[0].text;
 
-        const parsed = JSON.parse(rawText);
+        const parsed =
+          JSON.parse(rawText);
 
         updateConversationState(chatId, {
-          availableHours:
-            parsed.horariosDisponiveis,
+          businessUnits:
+            parsed.businessUnits
+        });
+
+        const buttons =
+          parsed.businessUnits.map(
+            (unit: any) => [
+              {
+                text: unit.name,
+                callback_data:
+                  `location:${unit.id}`
+              }
+            ]
+          );
+
+        await bot.sendMessage(
+          chatId,
+          "📍 Escolha uma unidade:",
+          {
+            reply_markup: {
+              inline_keyboard: buttons
+            }
+          }
+        );
+      }
+
+      if (data.startsWith("location:")) {
+
+        const locationId =
+          Number(data.split(":")[1]);
+
+        const state =
+          getConversationState(chatId);
+
+        updateConversationState(chatId, {
+          selectedLocation: locationId,
           currentStep: "CHOOSING_DATE"
         });
 
-        const availableDates = Object.keys(parsed.horariosDisponiveis);
+        const result =
+          await mcp.callTool(
+            "get_available_dates",
+            {
+              slug:
+                state.selectedCompany,
 
-        const buttons = availableDates.map((date) => [
-          {
-            text: date,
-            callback_data: `date:${date}`
-          }
-        ]);
+              serviceId:
+                state.selectedService.id
+            }
+          );
 
-        await bot.sendMessage(chatId, "📅 Escolha uma data:",
+        const rawText =
+          result.result.content[0].text;
+
+        const parsed =
+          JSON.parse(rawText);
+
+        updateConversationState(chatId, {
+          availableHours:
+            parsed.horariosDisponiveis
+        });
+
+        const availableDates =
+          Object.keys(
+            parsed.horariosDisponiveis
+          );
+
+        const buttons =
+          availableDates.map(
+            (date) => [
+              {
+                text: date,
+                callback_data:
+                  `date:${date}`
+              }
+            ]
+          );
+
+        await bot.sendMessage(
+          chatId,
+          "📅 Escolha uma data:",
           {
             reply_markup: {
-              inline_keyboard: buttons 
+              inline_keyboard: buttons
             }
           }
         );

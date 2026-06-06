@@ -11,30 +11,80 @@ export async function generateResponse(
   result: any
 ) {
 
-  switch (tool) {
+  const rawText =
+    result.result.content[0].text;
 
-    case "list_companies":
-      return formatCompanies(result);
-
-    case "get_company_services":
-      return formatServices(result);
-
-    case "get_available_dates":
-      return formatAvailableDates(result);
-
-    case "get_available_sessions":
-      return formatSessions(result);
-
-    case "schedule_appointment":
-      return formatBooking(result);
-
-    case "check_ticket_status":
-      return formatMyTickets(result);
-
-    case "list_my_tickets":
-      return formatTicketStatus(result);
-
-    default:
-      return "Não consegui processar a resposta.";
+  /*
+    ERRO MCP
+  */
+  if (
+    result.result.isError
+  ) {
+    return rawText;
   }
+
+  const parsed =
+    JSON.parse(rawText);
+
+  /*
+    LIST COMPANIES
+  */
+  if (tool === "list_companies") {
+
+    if (!parsed.companies?.length) {
+      return "Nenhuma empresa encontrada.";
+    }
+
+    return parsed.companies
+      .map(
+        (company: any, index: number) =>
+          `${index + 1}. ${company.name}`
+      )
+      .join("\n");
+  }
+
+  /*
+    GET COMPANY SERVICES
+  */
+  if (tool === "get_company_services") {
+
+    if (!parsed.services?.length) {
+      return "Nenhum serviço encontrado.";
+    }
+
+    let message =
+      "🛠 Serviços disponíveis:\n\n";
+
+    parsed.services.forEach(
+      (service: any, index: number) => {
+
+        message +=
+          `${index + 1}. ${service.name}\n`;
+      }
+    );
+
+    return message;
+  }
+
+  /*
+    GET AVAILABLE DATES
+  */
+  if (tool === "get_available_dates") {
+
+    const dates =
+      Object.keys(
+        parsed.horariosDisponiveis || {}
+      );
+
+    if (!dates.length) {
+      return "Nenhuma data disponível.";
+    }
+
+    return (
+      "📅 Datas disponíveis:\n\n" +
+      dates.join("\n")
+    );
+  }
+
+  return "Operação realizada.";
 }
