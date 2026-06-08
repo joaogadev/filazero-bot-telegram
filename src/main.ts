@@ -391,7 +391,60 @@ bot.on(
         return;
       }
 
-      
+      if (data === "confirm:appointment") {
+
+        const state =
+          getConversationState(chatId);
+
+        const appointmentBody = {
+
+          serviceId:
+            state.selectedService.id,
+
+          locationId:
+            state.selectedLocation,
+
+          date:
+            state.selectedDate,
+
+          time:
+            state.selectedHour,
+
+          customerName:
+            state.customerName,
+
+          customerPhone:
+            state.customerPhone
+        };
+
+        const result =
+          await mcp.callTool(
+            "schedule_appointment",
+            {
+              body: appointmentBody,
+              token:
+                process.env.USER_TOKEN
+            }
+          );
+
+        console.log(
+          JSON.stringify(
+            result,
+            null,
+            2
+          )
+        );
+
+        const rawText =
+          result.result.content[0].text;
+
+        await bot.sendMessage(
+          chatId,
+          rawText
+        );
+
+        return;
+      }
 
       await bot.answerCallbackQuery(query.id);
 
