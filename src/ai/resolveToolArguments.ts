@@ -91,6 +91,12 @@ export async function resolveToolArguments(
 
   if (tool === "get_available_sessions") {
 
+    console.log("STATE:");
+    console.log(JSON.stringify(state, null, 2));
+
+    console.log("SAFE ARGS:");
+    console.log(JSON.stringify(safeArgs, null, 2));
+
     return {
 
       slug:

@@ -3,6 +3,7 @@ import { bot } from "./bot/telegram.js";
 import { MCPClient } from "./mcp/MCPclient.js";
 import { getConversationState, updateConversationState } from "./state/conversationState.js";
 import { executeAIFlow } from "./ai/executeAiFlow.js";
+import { buildConfirmationMessage } from "./helpers/buildConfirmationMessage.js";
 
 const mcp = new MCPClient();
 console.log("Bot iniciado");
@@ -19,6 +20,78 @@ bot.on("message", async (msg) => {
 
     const state =
       getConversationState(chatId);
+
+    // captura nome
+    if (
+      state.currentStep ===
+      "ASKING_NAME"
+    ) {
+
+      updateConversationState(chatId, {
+        customerName: userMessage,
+        currentStep: "ASKING_PHONE"
+      });
+
+      await bot.sendMessage(
+        chatId,
+        "📱 Informe seu telefone:"
+      );
+
+      return;
+    }
+
+    // captura telefone
+    if (
+      state.currentStep ===
+      "ASKING_PHONE"
+    ) {
+
+      updateConversationState(chatId, {
+        customerPhone: userMessage,
+        currentStep:
+          "CONFIRMING_APPOINTMENT"
+      });
+
+      const updatedState =
+        getConversationState(chatId);
+
+      console.log(
+        JSON.stringify(
+          updatedState,
+          null,
+          2
+        )
+      );
+
+      await bot.sendMessage(
+        chatId,
+        buildConfirmationMessage(
+          updatedState
+        ),
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "✅ Confirmar",
+                  callback_data:
+                    "confirm:appointment"
+                }
+              ],
+              [
+                {
+                  text: "❌ Cancelar",
+                  callback_data:
+                    "cancel:appointment"
+                }
+              ]
+            ]
+          }
+        }
+      );
+
+      return;
+    }
 
     await executeAIFlow(
       userMessage,
@@ -57,8 +130,17 @@ bot.on(
       if (data.startsWith("company:")) {
         const slug = data.split(":")[1];
 
+        const state = getConversationState(chatId);
+
+        const company = state.companies?.find(
+            (c: any) =>
+              c.slug === slug
+          );
+
         updateConversationState(chatId, {
-          selectedCompany: slug
+          selectedCompany: slug,
+          selectedCompanyName:
+            company?.name
         });
 
         const result = await mcp.callTool("get_company_services", { slug });
@@ -66,6 +148,9 @@ bot.on(
         const rawText = result.result.content[0].text;
 
         const parsed = JSON.parse(rawText);
+
+        console.log("PARSED MCP:");
+        console.log(JSON.stringify(parsed,null,2));
 
         updateConversationState(chatId, {
           services: parsed.services,
@@ -105,6 +190,8 @@ bot.on(
 
         updateConversationState(chatId, {
           selectedService,
+          selectedServiceName:
+            selectedService?.name,
           currentStep: "CHOOSING_LOCATION"
         });
 
@@ -157,10 +244,40 @@ bot.on(
         const state =
           getConversationState(chatId);
 
+        const location = state.businessUnits?.find(
+          (unit: any) =>
+            unit.id === locationId
+        );
+
         updateConversationState(chatId, {
           selectedLocation: locationId,
+          selectedLocationName:
+            location?.name,
           currentStep: "CHOOSING_DATE"
         });
+
+        const sessionResult =
+          await mcp.callTool(
+            "get_available_sessions",
+            {
+              slug: state.selectedCompany,
+              serviceId: state.selectedService.id,
+              locationId,
+              date: "06/06/2026"
+            }
+          );
+
+        console.log(
+          "SESSIONS TEST:"
+        );
+
+        console.log(
+          JSON.stringify(
+            sessionResult,
+            null,
+            2
+          )
+        );
 
         const result =
           await mcp.callTool(
@@ -263,27 +380,18 @@ bot.on(
 
         updateConversationState(chatId, {
           selectedHour,
-          currentStep: "CONFIRMING_APPOINTMENT"
+          currentStep: "ASKING_NAME"
         });
 
-        // aqui você já entra na camada de "checkout do agendamento"
-        const confirmationText =
-          `📌 Confirmação do agendamento:\n\n` +
-          `📅 Data: ${selectedDate}\n` +
-          `🕒 Hora: ${selectedHour}\n\n` +
-          `Deseja confirmar?`;
+        await bot.sendMessage(
+          chatId,
+          "👤 Informe seu nome completo:"
+        );
 
-        await bot.sendMessage(chatId, confirmationText, {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: "✅ Confirmar", callback_data: "confirm:appointment" },
-                { text: "❌ Cancelar", callback_data: "cancel:appointment" }
-              ]
-            ]
-          }
-        });
+        return;
       }
+
+      
 
       await bot.answerCallbackQuery(query.id);
 

@@ -59,6 +59,13 @@ type ConversationState = {
   // horários disponíveis para a data escolhida
   availableHours?: any;
   selectedHour?: string;
+
+  selectedCompanyName?: string;
+  selectedServiceName?: string;
+  selectedLocationName?: string;
+
+  customerName?: string;
+  customerPhone?: string;
 };
 
 const conversations = new Map<number, ConversationState>();

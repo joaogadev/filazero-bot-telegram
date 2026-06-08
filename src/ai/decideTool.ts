@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getAllowedTools } from "../state/allowedTools.js";
 
 const client = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
@@ -9,6 +10,8 @@ export async function decideTool(
   message: string,
   state: any
 ) {
+
+  const allowedTools = getAllowedTools(state.currentStep);
 
   const aiState = {
 
@@ -213,6 +216,9 @@ export async function decideTool(
         }
 
         Responda SOMENTE JSON.
+
+        Ferramentas permitidas:
+          ${allowedTools.join("\n")}
         `
         },
 

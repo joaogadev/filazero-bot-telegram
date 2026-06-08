@@ -148,10 +148,59 @@ export async function executeAIFlow(
 
   if (aiResponse.tool === "get_available_sessions") {
 
+    // salva retorno para debug futuro
+    updateConversationState(chatId, {
+      sessions: parsed.professionals || []
+    });
+
+    // staging sem horários
+    if (
+      parsed.hasAvailability === false
+    ) {
+
+      await bot.sendMessage(
+        chatId,
+        "❌ Não existem horários disponíveis para esta data.\n\nTente selecionar outra data."
+      );
+
+      return;
+    }
+
+    // proteção extra
+    if (
+      !parsed.professionals ||
+      !Array.isArray(parsed.professionals)
+    ) {
+
+      await bot.sendMessage(
+        chatId,
+        "Nenhuma sessão retornada pela API."
+      );
+
+      return;
+    }
+
+    // coleta todos os horários dos profissionais
+    const availableTimes =
+      parsed.professionals.flatMap(
+        (professional: any) =>
+          professional.times || []
+      );
+
+    if (!availableTimes.length) {
+
+      await bot.sendMessage(
+        chatId,
+        "❌ Nenhum horário disponível foi encontrado."
+      );
+
+      return;
+    }
+
     await renderHours(
       bot,
       chatId,
-      parsed.sessions
+      availableTimes
     );
 
     return;
