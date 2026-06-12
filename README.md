@@ -19,8 +19,6 @@ git clone https://github.com/joaogadev/filazero-bot-telegram.git
 Baixe as dependencias necessárias, colando-as no terminal do projeto
 ```
 npm install
-npm install groq-sdk
-npm install node-telegram-bot-api dotenv
 ```
 Para o funcionamento local do bot é necessário que o MCP esteja ligado e rodando na porta 3000
 Para que isso ocorra, siga o passo a passo em
