@@ -3,6 +3,14 @@
 ## Sobre o Projeoto
 Bot inteligente desenvolvido em TypeScript, utilizando a plataforma de inferência de IA da Groq e o modelo Llama 3.3 70B Versatile para interpretação de linguagem natural, compreensão de contexto e tomada de decisão. A solução integra-se ao MCP da Filazero para execução de operações de negócio, permitindo que o usuário interaja por linguagem natural ou por fluxos guiados, enquanto a IA determina dinamicamente as ações e ferramentas necessárias para cada solicitação.
 
+## Tecnologias Utilizadas
+- TypeScript
+- Node.js
+- Telegram Bot API
+- Groq API
+- Llama 3.3 70B Versatile
+- MCP (Model Context Protocol)
+
 ## Como Utiliza-lo
 Clone o repositório do projeto utilizando o comando abaixo
 ```
@@ -41,4 +49,7 @@ Após concluir todo esse processo, rode no terminal o seguinte comando:
 ```
 npx tsx src/main.ts
 ```
+
+## Limitações Conhecidas
+O ambiente de staging da API pode retornar informações incompletas de sessões (sessionId e resourceId), o que pode impedir a conclusão de um agendamento real. Nesses casos, o fluxo do bot permanece funcional até a etapa de confirmação, mas o ticket não pode ser criado devido às restrições do ambiente de testes.
 
