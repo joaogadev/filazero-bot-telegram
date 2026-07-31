@@ -28,7 +28,7 @@ https://github.com/Abraao-works/Residencia3-Squad10-Mcp
 Se já estiver rodando, é necessario que as variáveis no .env estejam com as suas variaveis cadatradas
 Cole isso no seu .env
 ```
-TELEGRAM_BOT_TOKEN=8800232974:AAGDBqBBCBFG9-T4zsgl2zdn4UjhjVnoH-4
+TELEGRAM_BOT_TOKEN=
 GROQ_API_KEY= 
 GROQ_MODEL = llama-3.3-70b-versatile
 MCP_URL=http://localhost:3000/mcp
